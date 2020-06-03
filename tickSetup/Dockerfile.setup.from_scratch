@@ -1,0 +1,41 @@
+FROM ubuntu:18.04 AS build
+#FROM grpc/cxx AS build
+
+LABEL description="Container to build Base"
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update && apt-get -y install build-essential libtool pkg-config git
+
+
+# Get latest Cmake version
+ADD https://cmake.org/files/v3.17/cmake-3.17.2-Linux-x86_64.sh /cmake-31.7.2-Linux-x86_64.sh
+RUN mkdir -p /opt/cmake && \
+    sh /cmake-31.7.2-Linux-x86_64.sh --prefix=/opt/cmake --skip-license && \
+    ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake && \
+    cmake --version
+
+# Get ssl
+RUN apt-get update && apt-get install -y libssl-dev
+
+# Get and build grpc
+# default install dir is /usr/local
+#
+# On Mac:
+# 1. brew install OpenSSL
+# 2. After submodule update, edit ./third_party/abseil-cpp/absl/strings/CMakeLists.txt
+#    Look for absl_cc_library, NAME:cord and change the DEPS section and add absl::strings before strings_internal
+#    DEPS
+#     absl::strings
+#     absl::strings_internal
+#
+RUN mkdir -p /opt && \
+    cd /opt && \
+    git clone --recurse-submodules -b v1.28.1 https://github.com/grpc/grpc && \
+    cd grpc && \
+    mkdir -p cmake/build && \
+    cd cmake/build && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DgRPC_SSL_PROVIDER=package  ../.. && \
+    make -j4 install && \
+    cd /opt && \
+    rm -rf grpc

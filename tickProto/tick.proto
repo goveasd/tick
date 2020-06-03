@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package Price;
+
+service Tob {
+	rpc CurrentPrice(TickRequest) returns (TickDelta) {}
+}
+
+message TickRequest {
+	string symbol = 1;
+}
+
+message TickDelta {
+	double delta_price = 1;
+	int32  delta_size = 2;
+}
+

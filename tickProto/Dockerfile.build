@@ -1,0 +1,13 @@
+FROM cpp-build-base:0.1.0 AS build
+LABEL description="Container to build tickProto"
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV LD_LIBRARY_PATH "/usr/local/lib;${LD_LIBRARY_PATH}"
+
+WORKDIR /build
+
+COPY CMakeLists.txt tick.proto ./
+
+RUN cmake . && make
+RUN make install 
+

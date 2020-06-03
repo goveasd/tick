@@ -1,0 +1,34 @@
+FROM grpc/cxx:1.15.0 AS build
+LABEL description="Container to build Base"
+
+ENV DEBIAN_FRONTEND noninteractive
+
+#RUN echo "==== Before install ...."
+#RUN which cmake
+#RUN cmake --version
+#RUN echo "==== Before install ...."
+
+RUN apt-get remove cmake
+
+RUN apt-get update && \
+    apt-get -y install build-essential cmake
+
+RUN echo "==== After install ...."
+RUN which cmake
+RUN cmake --version
+RUN echo "==== After install ...."
+
+# Get latest Cmake version
+#ADD https://cmake.org/files/v3.17/cmake-3.17.2-Linux-x86_64.sh /cmake-3.17.2-Linux-x86_64.sh
+#RUN mkdir /opt/cmake && \
+    #sh /cmake-3.17.2-Linux-x86_64.sh --prefix=/opt/cmake --skip-license && \
+    #ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake && \
+    #cmake --version
+#ENV PATH=/usr/local/bin:$PATH
+#RUN echo "==== After self install ...."
+#RUN echo "$PATH"
+#RUN echo "${PATH}"
+#RUN which cmake
+#RUN cmake --version
+#RUN echo "==== After self install ...."
+
