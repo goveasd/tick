@@ -9,6 +9,8 @@ set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/../install )
 
 if (APPLE)
 	set(OPENSSL_ROOT_DIR "/usr/local/opt/openssl/")
+
+	set(CMAKE_MACOSX_RPATH 1)
 endif()
 
 message("${PROJECT_NAME} CMAKE_CXX_STANDARD = ${CMAKE_CXX_STANDARD}")
@@ -126,9 +128,31 @@ configure_file(tick_server_version.h.in general/tick_server_version.h)
 
 # Build Client
 add_executable(tickserver main.cpp)
+
+# the install RPATH for tickclient to find tickproto in the install tree.
+# if the install RPATH is not provided, the install tickclient will have none
+#
+#       Try: otool -l tickserver | grep LC_RPATH -A2
+#       when set to loader_path, you see otool spit out loader_path. After running fixIt, it
+#       adds a new entry for executable_path (2 entries)
+#
+#       However, setting it to executable_path directly (instead of loader_path), does not seem to
+#       solve the issue. We still have to run fixIt. After the fixIt run, there are now 2 entries
+#       both reading executable_path!!!! So, not sure whats going on.
+#
+#	The funny part is that if you set it to executable_path and then do a fixIt, duplicates get added
+#       as mentioned above without a problem. However, if you try to run a fixIt again, it complains
+#       that the add would result in a duplicate!!
+#
+set_target_properties(tickserver PROPERTIES INSTALL_RPATH “@loader_path/../lib”)
+
+#set_target_properties(tickserver PROPERTIES INSTALL_RPATH “@executable_path/../lib”)
+
 target_link_libraries(tickserver
         ${GRPC_LIBS} ${PROTOBUF_LIBS})
 target_link_libraries(tickserver
         ${TickProtoLib} )
 
-install(TARGETS tickserver DESTINATION bin)
+install(TARGETS tickserver
+        COMPONENT Exes
+        DESTINATION bin)

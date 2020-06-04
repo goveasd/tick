@@ -9,6 +9,13 @@ set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/../install )
 
 if (APPLE)
 	set(OPENSSL_ROOT_DIR "/usr/local/opt/openssl/")
+        
+	message("Current Apple RPATH Setting ${CMAKE_MACOSX_RPATH}")
+
+	# enable @rpath in the install name for any shared library being built
+	# note: it is planned that a future version of CMake will enable this by default
+	set(CMAKE_MACOSX_RPATH 1)
+
 endif()
 
 message("${PROJECT_NAME} CMAKE_CXX_STANDARD = ${CMAKE_CXX_STANDARD}")
@@ -126,7 +133,19 @@ configure_file(tick_client_version.h.in general/tick_client_version.h)
 
 # Build Client
 add_executable(tickclient main.cpp)
+
+# the install RPATH for tickclient to find tickproto in the install tree.
+# if the install RPATH is not provided, the install tickclient will have none
+#set_target_properties(tickclient PROPERTIES INSTALL_RPATH “@loader_path/../lib”)
+set_target_properties(tickclient PROPERTIES INSTALL_RPATH “@executable_path/../lib”)
+
 target_link_libraries(tickclient
         ${TickProtoLib} ${GRPC_LIBS} ${PROTOBUF_LIBS})
 
-install(TARGETS tickclient DESTINATION bin)
+#install(TARGETS tickclient
+#        CONFIGURATION Debug
+#        RUNTIME DESTINATION Debug/bin)
+
+install(TARGETS tickclient
+        COMPONENT Exes
+        DESTINATION bin)

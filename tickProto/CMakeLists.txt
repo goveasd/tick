@@ -134,5 +134,7 @@ target_link_libraries(tickproto
                            PUBLIC ${GRPC_LIBS}
                            PUBLIC ${PROTOBUF_LIBS})
 
-install(TARGETS tickproto DESTINATION lib)
+install(TARGETS tickproto
+        COMPONENT Libraries
+        DESTINATION lib)
 install(FILES ${pt_proto_hdrs} ${pt_grpc_hdrs} DESTINATION include/tickproto)
