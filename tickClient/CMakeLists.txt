@@ -81,11 +81,7 @@ if(gRPC_FOUND)
 
 	set(GRPC_INCS $<TARGET_PROPERTY:gRPC::grpc++,INTERFACE_INCLUDE_DIRECTORIES>)
 
-	list(APPEND GRPC_LIBS $<TARGET_PROPERTY:gRPC::grpc++,INTERFACE_LINK_LIBRARIES>)
-	list(APPEND GRPC_LIBS $<TARGET_PROPERTY:gRPC::grpc,INTERFACE_LINK_LIBRARIES>)
 	list(APPEND GRPC_LIBS $<TARGET_PROPERTY:gRPC::grpc++_reflection,INTERFACE_LINK_LIBRARIES>)
-	list(APPEND GRPC_LIBS $<TARGET_PROPERTY:gRPC::grpc++_unsecure,INTERFACE_LINK_LIBRARIES>)
-	list(APPEND GRPC_LIBS $<TARGET_PROPERTY:gRPC::gpr,INTERFACE_LINK_LIBRARIES>)
 
 	set(GRPC_PLUGIN $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 
@@ -96,21 +92,13 @@ else()
 	pkg_check_modules(grpc REQUIRED IMPORTED_TARGET grpc>=9.0)
 	pkg_check_modules(grpc++ REQUIRED IMPORTED_TARGET grpc++>=1.28)
 
-	list(APPEND GRPC_LIBS PkgConfig::grpc)
-	list(APPEND GRPC_LIBS PkgConfig::grpc++)
-	#list(APPEND GRPC_LIBS PkgConfig::grpc++_reflection)
-	list(APPEND GRPC_LIBS PkgConfig::grpc++_unsecure)
-	list(APPEND GRPC_LIBS PkgConfig::gpr)
 	set(GRPC_INCS ${GRPC_INCLUDE_DIRS})
+
+	list(APPEND GRPC_LIBS PkgConfig::grpc++_reflection)
 
 	find_program(GRPC_PLUGIN grpc_cpp_plugin)
 
 endif()
-
-#?? Needed?
-#set(_GRPC_UNSECURE gRPC::grpc++_unsecure)
-#list(APPEND EXTRA_LIBS clion_protobuf "${_GRPC_UNSECURE}")
-
 
 message("GRPC_LIBS=${GRPC_LIBS}")
 message("GRPC_INCLUDE_DIRS=${GRPC_INCS}")
