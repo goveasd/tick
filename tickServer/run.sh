@@ -1,1 +1,1 @@
-docker container run tick-client-exe:1.0.0
+docker container run -it -p 50081:50081 tick-server-exe:1.0.0

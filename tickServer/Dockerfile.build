@@ -23,3 +23,5 @@ RUN rm -rf src
 
 ENTRYPOINT ["/install/bin/tickserver"]
 CMD [ "-l", "50081"]
+
+EXPOSE 50081
