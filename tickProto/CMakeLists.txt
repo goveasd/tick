@@ -71,10 +71,7 @@ find_package(gRPC CONFIG REQUIRED)
 if(gRPC_FOUND)
 	message("Found gRPC via find_package Version:${gRPC_VERSION}")
 
-	set(GRPC_INCS $<TARGET_PROPERTY:gRPC::grpc++,INTERFACE_INCLUDE_DIRECTORIES>)
 
-	#list(APPEND GRPC_LIBS $<TARGET_PROPERTY:gRPC::grpc,INTERFACE_LINK_LIBRARIES>)
-	#list(APPEND GRPC_LIBS $<TARGET_PROPERTY:gRPC::grpc++,INTERFACE_LINK_LIBRARIES>)
 	list(APPEND GRPC_LIBS $<TARGET_PROPERTY:gRPC::grpc++_reflection,INTERFACE_LINK_LIBRARIES>)
 
 	set(GRPC_PLUGIN $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
@@ -86,23 +83,15 @@ else()
 	pkg_check_modules(grpc REQUIRED IMPORTED_TARGET grpc>=9.0)
 	pkg_check_modules(grpc++ REQUIRED IMPORTED_TARGET grpc++>=1.28)
 
-	#list(APPEND GRPC_LIBS PkgConfig::grpc)
-	#list(APPEND GRPC_LIBS PkgConfig::grpc++)
 	list(APPEND GRPC_LIBS PkgConfig::grpc++_reflection)
 	set(GRPC_INCS ${GRPC_INCLUDE_DIRS})
 
 	find_program(GRPC_PLUGIN grpc_cpp_plugin)
-
 endif()
 
 message("GRPC_LIBS=${GRPC_LIBS}")
 message("GRPC_INCLUDE_DIRS=${GRPC_INCS}")
 message("GRPC_PLUGIN=${GRPC_PLUGIN}")
-
-
-#?? Needed?
-#set(_GRPC_UNSECURE gRPC::grpc++_unsecure)
-#list(APPEND EXTRA_LIBS clion_protobuf "${_GRPC_UNSECURE}")
 
 # Proto file
 get_filename_component(pt_proto "./tick.proto" ABSOLUTE)
