@@ -4,17 +4,19 @@ First cut gRPC based tick server/client. Also installs proto/tick/server into do
 Notes:
 When building ngix server and TLS on OS/X, make sure you uninstall "brew unistall binutils". You know you haven't done so if a build of tls results in link errors and a warning about ranlib.
 
-Download nginx
+Build Nginx
+
+1. Download nginx
 mkdir ~/nginx
-curl -OL http://nginx.org/download/nginx-1.18.0.tar.gz
+curl -OL http://nginx.org/download/nginx-1.18.0.tar.gz           or 
 tar -xvzf nginx-1.18.0.tar.gz && rm nginx-1.18.0.tar.gz
 
-Download openSsl
+2. Download openSsl
 mkdir ~/openssl
-curl --remote-name https://www.openssl.org/source/openssl-1.1.1a.tar.gz
+curl --remote-name https://www.openssl.org/source/openssl-1.1.1a.tar.gz      or
 tar xvzf openssl-1.1.0g.tar.gz && rm openssl-1.1.0g.tar.gz 
 
-
+3. Run Configure
 ./configure --http-client-body-temp-path=/tmp/cache/nginx/client_temp
 --http-proxy-temp-path=/tmp/cache/nginx/proxy_temp
 --http-fastcgi-temp-path=/tmp/cache/nginx/fastcgi_temp
@@ -42,3 +44,9 @@ tar xvzf openssl-1.1.0g.tar.gz && rm openssl-1.1.0g.tar.gz
 --with-stream_ssl_module
 --with-mail_ssl_module
 --with-openssl=/locationOfOppenSslSource/openssl
+
+4. Make nginx
+make
+
+5. Install - default into /usr/local/nginx
+make install
