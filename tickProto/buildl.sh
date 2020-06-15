@@ -1,4 +1,4 @@
 mkdir -p build
 pushd build
-cmake .. && make install
+cmake ../CMakeLists.txt && make install
 popd
