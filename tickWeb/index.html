@@ -4,10 +4,24 @@
 	<meta charset="UTF-8">
 	<title>gRPC-Web Tick</title>
 	<!-- -->
-	<script src="./dist/main.js"></script>
+  	<script src="./dist/main.js"></script>
 	<!-- -->
 </head>
 <body>
-  <p>Open up the developer console and see the logs for the output  xxx !!</p> 
+
+  <p>Open up the developer console and see the logs for the output!!</p> 
+
+	<!-- 
+  <p id="Price">500</p>
+  <p id="Size">1000</p>
+  <p id="Status">Initial</p>
+	-->
+	Price:  <input type="text" size="20" id="Price" value="500" ><br>
+	Size:   <input type="text" size="20" id="Size" value="100" ><br>
+	Status: <input type="text" size="20" id="Status" value="Initial" readonly><br>
+
+  <input type="button" onclick="getDelta();" value="Get Delta"/>
+
 </body>
+
 </html>

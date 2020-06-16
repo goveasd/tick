@@ -68,11 +68,12 @@ int main( int argc, char **argv) {
     struct option longopts[] = {
             { "initial_price",  required_argument,   nullptr, 'i' },
             { "server_port",    required_argument,   nullptr, 's' },
+            { "help",           no_argument      ,   nullptr, 'h' },
             { nullptr,  0,                  nullptr,  0 }
     };
 
     int32_t ch;
-    while ((ch = getopt_long(argc, argv, "i:s:", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "i:s:h", longopts, NULL)) != -1) {
         switch(ch) {
             case 'i':
                 initial_price = atoi(optarg);
@@ -80,9 +81,12 @@ int main( int argc, char **argv) {
             case 's':
                 server_port = atoi(optarg);
                 break;
+            case 'h':
+                std::cout << "tickclient [-i InitialPrice] [-s ServerListenPort] [-h]" << std::endl;
+		exit( 0 );
             case '?':
             default:
-                exit(-1);
+                exit( -1 );
         }
     }
 

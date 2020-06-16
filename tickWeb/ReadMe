@@ -4,20 +4,20 @@
 
 2. Startup docker Server container - in tickServer Directory
 
-3. Run buildIt.sh to build client.js - in tickWeb Directory
+3. Run buildJsClient.sh to build client.js - in tickWeb Directory
 
 4. Run a webserver that would serve up client.js (via index.html) - in tickWeb Directory
-	python -m http.server 8081
+	nginx
 
 5. Build Envoy Proxy container - in tickWeb Directory
-	docker build -t envoy:v1 .
+	buildEnvoyDocker.sh
 	
 6. Startup Envoy Proxy 
-	docker run -d --name envoy -p 9901:9901 -p 9001:9001 envoy:v1
+	docker run -d --name envoy -p 9901:9901 -p 9101:9101 envoy:v1
 
 7. Point browser at localhost:8081
 
 
-	8081 is served by Python Webserver that delivers client.js
-	client.js connects to port 9001 that hits envoy proxy
+	8081 is served by Nginx Webserver that delivers client.js
+	client.js connects to port 9001. Gets redirected by nginx to envoy proxy
 	envoy proxy directs to tickServer on port 50081
