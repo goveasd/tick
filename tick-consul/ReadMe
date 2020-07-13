@@ -1,0 +1,25 @@
+1. Install Vagrant - https://www.vagrantup.com/downloads
+2. Create Vagrant file Vagrantfile
+3. Startup VMs - will install consul on all VMs
+	vagrant up
+4. Run consul on your local node 
+	perl create.consul.agents.pl
+5. Run "vagrant ssh consul-server"
+	cd /vagrant
+	run Consul agent there - start.consul.server.agent.sh
+6. Run consul on lb and web1-3
+	cd /vagrant
+	run perl create.consul.agents.pl
+7. On consul-server Run 
+	a. consul members
+		should list consul running on the various VMs
+	b. dns.lookup.sh
+8. Build Envoy docker image running buildEnvoyDocker.sh
+9. Copy main.js (built in tickWeb) into nginx/dist
+10. Install Nginx on the web servers web1-3
+	perl create.nginx-web.service.pl
+11. Build Envoy Docker image
+12. Start Envoy
+	startEnvoy.sh
+
+
