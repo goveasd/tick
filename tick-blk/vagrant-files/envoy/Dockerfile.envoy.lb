@@ -1,0 +1,4 @@
+FROM envoyproxy/envoy-dev:latest
+RUN apt-get update
+COPY ./envoy.lb.yaml /etc/envoy.lb.yaml
+CMD /usr/local/bin/envoy -c /etc/envoy.lb.yaml
