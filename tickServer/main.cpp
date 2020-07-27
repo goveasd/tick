@@ -17,27 +17,40 @@ using grpc::Status;
 #include <tickproto/tick.pb.h>
 #include <tickproto/tick.grpc.pb.h>
 
+#include "../tickDirectionClient/tickDirectionClientImpl.h"
+
 class TickServerImpl final : public Price::Tob::Service {
 
 public:
-	enum class Direction : char  {
-		UP = 'u',
-		DOWN = 'd'
-	};
 
-	TickServerImpl(Direction side, int32_t listen_on)
-		: direction(side) {
+	TickServerImpl(int32_t listen_on, const std::string& direction_srvr_id, int32_t cur_price, int32_t cur_sz ) 
+		: ds_location(direction_srvr_id), current_price(cur_price), current_size(cur_sz) {
 		
 		server_address.append(":").append(std::to_string(listen_on));
+	
 	}
 
 	Status CurrentPrice(ServerContext * context,
                         const Price::TickRequest * request,
                         Price::TickDelta * reply) override {
-		++count;
 
-		reply->set_delta_price(count%2 == 0 ? 1 : -1);
-		reply->set_delta_size(count%2 == 0 ? 1 : -1);
+		createDirectionServerClient();
+
+		auto currState = ds_client->Move();
+		if (std::get<0>(currState) != TickDirectionClientImpl::INVALID_PRICE) {
+			//std::cout << "Direction[ price:" << std::get<0>(currState) << " size:" << std::get<1>(currState) << " ]" << std::endl;
+
+			current_price += std::get<0>(currState);
+			current_size += std::get<1>(currState);
+
+			reply->set_delta_price(current_price);
+			reply->set_delta_size(current_size);
+			reply->set_status(Price::TickDelta_Status_GOOD);
+		}
+		else {
+			reply->set_status(Price::TickDelta_Status_ERROR);
+		}
+
 
 		return Status::OK;
 	}
@@ -45,9 +58,23 @@ public:
 	void Run();
 
 private:
-	Direction direction{Direction::UP};
+
+	void createDirectionServerClient() {
+
+		if (ds_client)
+			return;
+
+		std::cout << "Connecting to Direction Server: " << ds_location << std::endl;
+
+		ds_client.reset( new TickDirectionClientImpl(grpc::CreateChannel(ds_location, grpc::InsecureChannelCredentials())) );
+	}
+
+private:
+	std::unique_ptr<TickDirectionClientImpl> ds_client;
 	std::string server_address{"0.0.0.0"};
-	uint32_t count{0};
+	std::string ds_location;
+	int32_t current_price{0};
+	int32_t current_size{0};
 };
 
 void TickServerImpl::Run() {
@@ -68,6 +95,9 @@ void TickServerImpl::Run() {
 	std::unique_ptr<Server> server(builder.BuildAndStart());
 	std::cout << "Server listening on " << server_address << std::endl;
 
+	// Delay connection to the Direction server until the first connection
+	// comes in.
+
 	// Wait for the server to shutdown. Note that some other thread must be
 	// responsible for shutting down the server for this call to ever return.
 	server->Wait();
@@ -75,38 +105,58 @@ void TickServerImpl::Run() {
 
 int main( int argc, char **argv) {
 
-	TickServerImpl::Direction direction = TickServerImpl::Direction::DOWN;
 	int32_t listen_port = 50081;
+	int32_t initial_price{500};
+	int32_t initial_size{100};
+	std::string direction_loc{"localhost:50091"};
 
 	struct option longopts[] = {
-		{ "direction",      required_argument,   nullptr, 'd' },
 		{ "listen_port",    required_argument,   nullptr, 'l' },
+		{ "direction_loc", required_argument,   nullptr, 'd' },
+		{ "initial_price", required_argument,   nullptr, 'p' },
+		{ "initial_size", required_argument,   nullptr, 's' },
 		{ nullptr,  0,                  nullptr,  0 }
 	};
 
 	int32_t ch;
-	while ((ch = getopt_long(argc, argv, "d:l:", longopts, NULL)) != -1) {
+	while ((ch = getopt_long(argc, argv, "l:d:p:s:", longopts, NULL)) != -1) {
 		switch(ch) {
-			case 'd':
-				if (strcasecmp(optarg, "UP") == 0)
-					direction = TickServerImpl::Direction::UP;
-				break;
 			case 'l':
 				listen_port = atoi(optarg);
 				break;
+			case 'd':
+				direction_loc = optarg;
+				break;
+			case 'p':
+				initial_price = atoi(optarg);
+				break;
+			case 's':
+				initial_size = atoi(optarg);
+				break;
 			case '?':
 			default:
-				std::cerr << "Usage: " << argv[0] << " [-d [UP|DOWN]] [-l listen_port]" << "\n"
-					<< "d   - Direction Up or Down 1 cent. Default Down" << "\n"
-					<< "l   - Port to listen to for client requests" << "\n"
+				std::cerr << "Usage: " << argv[0] << " [-l listen_port] [-d direction_server_port] [-p initial_price] [-s initialia_size]" << "\n"
+					<< "l   - Port to listen to for client requests. Default 50081" << "\n"
+					<< "d   - Direction Server Location to connect to. Default localhost:50091" << "\n"
+					<< "p   - Iniital Price. Default 500." << "\n"
+					<< "s   - Iniital Size. Default 100." << "\n"
 					<< std::endl;
 				exit(-1);
 		}
 	}
 
-	std::cout << "Listen Port: " << listen_port << " Direction=" << static_cast<char>(direction) << std::endl;
+	if (listen_port < 100) {
+		std::cerr << "Server port not specified or invalid" << std::endl;
+		exit(-2);
+	}
 
-	TickServerImpl server(direction, listen_port);
+	std::cout << "Listen Port: " << listen_port << "   Direction server location: " << direction_loc << "\n"
+	          << "Initial Price: " << initial_price << "   Initial Size: " << initial_size << std::endl;
+
+	// Create connection to TickDirectionServer
+	//
+
+	TickServerImpl server(listen_port, direction_loc, initial_price, initial_size);
 	server.Run();
 
 	return 0;

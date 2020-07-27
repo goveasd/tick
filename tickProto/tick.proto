@@ -6,6 +6,12 @@ service Tob {
 	rpc CurrentPrice(TickRequest) returns (TickDelta) {}
 }
 
+service Direction {
+	rpc Move(TickDirectionRequest) returns (TickDirectionDelta) {}
+}
+
+
+// Messages from tickClient -> tickServer
 message TickRequest {
 	string symbol = 1;
 }
@@ -13,5 +19,23 @@ message TickRequest {
 message TickDelta {
 	double delta_price = 1;
 	int32  delta_size = 2;
+
+    enum Status {
+		GOOD = 0;
+		ERROR = 1;
+	};
+
+	Status status = 3;
+}
+
+
+// Messages from tickServer -> tickDirectionServer
+message TickDirectionRequest {
+	string symbol = 1;
+}
+
+message TickDirectionDelta {
+	int32 delta_price = 1;
+	int32 delta_size = 2;
 }
 

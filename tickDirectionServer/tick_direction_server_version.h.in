@@ -1,0 +1,2 @@
+#define tickDirectionServer_VERSION_MAJOR @tickDirectionServer_VERSION_MAJOR@
+#define tickDirectionServer_VERSION_MINOR @tickDirectionServer_VERSION_MINOR@

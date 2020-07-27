@@ -1,2 +1,2 @@
-#define tickServer_VERSION_MAJOR @tickServer_VERSION_MAJOR@
-#define tickServer_VERSION_MINOR @tickServer_VERSION_MINOR@
+#define tickClient_VERSION_MAJOR @tickClient_VERSION_MAJOR@
+#define tickClient_VERSION_MINOR @tickClient_VERSION_MINOR@

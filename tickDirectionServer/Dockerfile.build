@@ -1,0 +1,27 @@
+FROM tick-proto-lib:1.0.0 AS build
+
+ARG BUILD_NUMBER=0
+ARG BUILD_TAG=local
+
+LABEL description="tickServer Image"
+LABEL version="1.0"
+LABEL build_number=${BUILD_NUMBER}
+LABEL build_tag=${BUILD_TAG}
+
+ENV DEBIAN_FRONTEND noninteractive
+
+WORKDIR /src
+
+COPY CMakeLists.txt main.cpp tick_server_version.h.in ./
+
+ENV LD_LIBRARY_PATH "/usr/local/lib;/install/lib;${LD_LIBRARY_PATH}"
+RUN cmake . && make
+RUN make install
+
+WORKDIR /
+RUN rm -rf src
+
+ENTRYPOINT ["/install/bin/tickserver"]
+CMD [ "-l", "50081"]
+
+EXPOSE 50081
