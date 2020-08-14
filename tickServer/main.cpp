@@ -23,12 +23,9 @@ class TickServerImpl final : public Price::Tob::Service {
 
 public:
 
-	TickServerImpl(int32_t listen_on, const std::string& direction_srvr_id, int32_t cur_price, int32_t cur_sz ) 
-		: ds_location(direction_srvr_id), current_price(cur_price), current_size(cur_sz) {
-		
-		server_address.append(":").append(std::to_string(listen_on));
-	
-	}
+	TickServerImpl(const std::string& listen_at, const std::string& direction_srvr_id, int32_t cur_price, int32_t cur_sz)
+		: current_price(cur_price), current_size(cur_sz), server_address(listen_at), ds_location(direction_srvr_id) {
+		}
 
 	Status CurrentPrice(ServerContext * context,
                         const Price::TickRequest * request,
@@ -51,7 +48,6 @@ public:
 			reply->set_status(Price::TickDelta_Status_ERROR);
 		}
 
-
 		return Status::OK;
 	}
 
@@ -61,20 +57,24 @@ private:
 
 	void createDirectionServerClient() {
 
+
 		if (ds_client)
 			return;
 
 		std::cout << "Connecting to Direction Server: " << ds_location << std::endl;
 
 		ds_client.reset( new TickDirectionClientImpl(grpc::CreateChannel(ds_location, grpc::InsecureChannelCredentials())) );
+
+		// Setup Watch Health service to DirectionServer
+		// Servers Health service is based on Direction server status.
 	}
 
 private:
 	std::unique_ptr<TickDirectionClientImpl> ds_client;
-	std::string server_address{"0.0.0.0"};
-	std::string ds_location;
 	int32_t current_price{0};
 	int32_t current_size{0};
+	std::string server_address;
+	std::string ds_location;
 };
 
 void TickServerImpl::Run() {
@@ -95,6 +95,9 @@ void TickServerImpl::Run() {
 	std::unique_ptr<Server> server(builder.BuildAndStart());
 	std::cout << "Server listening on " << server_address << std::endl;
 
+	grpc::HealthCheckServiceInterface* hlth_service = server->GetHealthCheckService();
+	hlth_service->SetServingStatus("Price.Health", true); 
+
 	// Delay connection to the Direction server until the first connection
 	// comes in.
 
@@ -105,24 +108,39 @@ void TickServerImpl::Run() {
 
 int main( int argc, char **argv) {
 
-	int32_t listen_port = 50081;
+	// Default location we will listen to if EP not provided.
+    constexpr char dflt_ip_endpoint[] = "localhost:50081";
+
 	int32_t initial_price{500};
 	int32_t initial_size{100};
+
+	// Default Direction server EP if not provided
 	std::string direction_loc{"localhost:50091"};
 
 	struct option longopts[] = {
-		{ "listen_port",    required_argument,   nullptr, 'l' },
+		{ "listen_port",  required_argument,   nullptr, 'l' },
 		{ "direction_loc", required_argument,   nullptr, 'd' },
 		{ "initial_price", required_argument,   nullptr, 'p' },
 		{ "initial_size", required_argument,   nullptr, 's' },
 		{ nullptr,  0,                  nullptr,  0 }
 	};
 
+	std::string server_ep;
+
 	int32_t ch;
 	while ((ch = getopt_long(argc, argv, "l:d:p:s:", longopts, NULL)) != -1) {
 		switch(ch) {
 			case 'l':
-				listen_port = atoi(optarg);
+				{
+					int32_t listen_port = atoi(optarg);
+					if (listen_port > 0) {
+						server_ep.append("localhost:").append(std::to_string(listen_port));
+					}
+					else {
+						// Assume provided EndPoint is a Unix socket
+						server_ep = optarg;
+					}
+				}
 				break;
 			case 'd':
 				direction_loc = optarg;
@@ -135,8 +153,8 @@ int main( int argc, char **argv) {
 				break;
 			case '?':
 			default:
-				std::cerr << "Usage: " << argv[0] << " [-l listen_port] [-d direction_server_port] [-p initial_price] [-s initialia_size]" << "\n"
-					<< "l   - Port to listen to for client requests. Default 50081" << "\n"
+				std::cerr << "Usage: " << argv[0] << " [-l listen_endpoint] [-d direction_server_port] [-p initial_price] [-s initialia_size]" << "\n"
+					<< "l   - Port or Unix Socket to listen to for client requests. Default IP socket of 50081" << "\n"
 					<< "d   - Direction Server Location to connect to. Default localhost:50091" << "\n"
 					<< "p   - Iniital Price. Default 500." << "\n"
 					<< "s   - Iniital Size. Default 100." << "\n"
@@ -145,18 +163,19 @@ int main( int argc, char **argv) {
 		}
 	}
 
-	if (listen_port < 100) {
-		std::cerr << "Server port not specified or invalid" << std::endl;
-		exit(-2);
+	if (server_ep.empty()) {
+		server_ep = dflt_ip_endpoint;
+		std::cout << "Defaulting to listen at Endpoint: " << server_ep << std::endl;
 	}
 
-	std::cout << "Listen Port: " << listen_port << "   Direction server location: " << direction_loc << "\n"
-	          << "Initial Price: " << initial_price << "   Initial Size: " << initial_size << std::endl;
+	std::cout << "Tick Server Listen Port: " << server_ep << "   Direction server location: " << direction_loc << "\n"
+	          << "Initial Price: " << initial_price << "   Initial Size: " << initial_size << "\n"
+			  << std::endl;
 
 	// Create connection to TickDirectionServer
 	//
 
-	TickServerImpl server(listen_port, direction_loc, initial_price, initial_size);
+	TickServerImpl server(server_ep, direction_loc, initial_price, initial_size);
 	server.Run();
 
 	return 0;

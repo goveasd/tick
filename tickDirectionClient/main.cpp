@@ -3,34 +3,41 @@
 
 int main( int argc, char **argv) {
 
-    int32_t server_port = 50091;
-
+	constexpr char dflt_unix_endpoint[] = "unix:/tmp/DirectionServer";
+    constexpr char dflt_ip_endpoint[] = "localhost:50091";
+	const char * server_ep{nullptr};
 
     struct option longopts[] = {
-            { "server_port",    required_argument,   nullptr, 's' },
-            { "help",           no_argument      ,   nullptr, 'h' },
-            { nullptr,  0,                  nullptr,  0 }
+            { "server_ep",    required_argument,   nullptr, 's' },
+            { "help",         no_argument      ,   nullptr, 'h' },
+            { nullptr,  0,    nullptr,  0 }
     };
 
     int32_t ch;
-    while ((ch = getopt_long(argc, argv, "i:s:h", longopts, NULL)) != -1) {
+    while ((ch = getopt_long(argc, argv, "s:h", longopts, NULL)) != -1) {
         switch(ch) {
             case 's':
-                server_port = atoi(optarg);
+                server_ep = optarg;
                 break;
             case 'h':
+                std::cout << "tickDirectionClient [-s ServerListenEndPoint] [-h]" << "\n\n"
+					      << "ServerListenEndPoint can be a IP:PORT or a UnixDomainSocket File in the format unix:/FileName "
+						  << std::endl;
+				exit( 0 );
             case '?':
             default:
-                std::cout << "tickDirectionclient [-s ServerListenPort] [-h]" << std::endl;
                 exit( -1 );
         }
     }
 
-    std::cout << "Direction Server Listen Port: " << server_port << std::endl;
-    std::string serverDest{"localhost"};
-    serverDest.append(":").append(std::to_string(server_port));
+	if (!server_ep) {
+		std::cout << "** Defaulting Server EndPoint to " << dflt_ip_endpoint << std::endl;
+		server_ep = dflt_ip_endpoint;
+	}
 
-    TickDirectionClientImpl client(grpc::CreateChannel(serverDest, grpc::InsecureChannelCredentials()));
+    std::cout << "Connecting to Tick Server over: " << server_ep << std::endl;
+
+    TickDirectionClientImpl client(grpc::CreateChannel(server_ep, grpc::InsecureChannelCredentials()));
 
     while(true) {
 		std::cout << "Before Move" << std::endl;

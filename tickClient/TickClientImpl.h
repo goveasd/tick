@@ -10,6 +10,8 @@
 #endif
 
 #include <grpcpp/grpcpp.h>
+#include <grpcpp/ext/health_check_service_server_builder_option.h>
+#include <grpcpp/health_check_service_interface.h>
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -18,14 +20,20 @@ using grpc::Status;
 #include <general/tick_client_version.h>
 #include <tickproto/tick.pb.h>
 #include <tickproto/tick.grpc.pb.h>
+#include <tickproto/tick.health.pb.h>
+#include <tickproto/tick.health.grpc.pb.h>
 
 class TickClientImpl {
     int32_t current_price{100};
     int32_t current_size{600};
     std::unique_ptr<Price::Tob::Stub> stub_;
+    std::unique_ptr<grpc::health::v1::Health::Stub> hlthstub_;
+
 public:
+
     TickClientImpl(std::shared_ptr<Channel> channel)
-        : stub_(Price::Tob::NewStub(channel)) {
+        : stub_(Price::Tob::NewStub(channel)),
+	      hlthstub_(grpc::health::v1::Health::NewStub(channel)) {
     }
 
     // Assembles the client's payload, sends it and presents the response back
@@ -64,6 +72,31 @@ public:
                   << std::endl;
 
 		return std::make_pair(-999999, -1);
+	}
+
+	bool isServerGood() const {
+		
+		grpc::health::v1::HealthCheckRequest hlth_req;
+		hlth_req.set_service("Price.Health");
+
+		grpc::health::v1::HealthCheckResponse hlth_res;
+
+        ClientContext context;
+		Status status = hlthstub_->Check(&context, hlth_req, &hlth_res);
+
+		if (!status.ok()) {
+			std::cerr << "Server HLTH CHECK != OK" << std::endl;
+			return false;
+		}
+
+		if (hlth_res.status() != grpc::health::v1::HealthCheckResponse::SERVING) {
+			std::cerr << "Server HLTH CHECK - NOT SERVING" << std::endl;
+			return false;
+		}
+
+		std::cout << "Tick Server is healthy!!" << std::endl;
+
+		return true;
 	}
 };
 

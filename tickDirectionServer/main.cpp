@@ -23,9 +23,9 @@ class TickDirectionServerImpl final : public Price::Direction::Service {
 
 public:
 
-	TickDirectionServerImpl(int32_t listen_on) {
+	TickDirectionServerImpl(const std::string& listen_on)
+	    : server_address(listen_on) {
 		
-		server_address.append(":").append(std::to_string(listen_on));
 	    srand(time(nullptr));
 	}
 
@@ -46,7 +46,7 @@ public:
 	void Run();
 
 private:
-	std::string server_address{"0.0.0.0"};
+	std::string server_address;
 };
 
 void TickDirectionServerImpl::Run() {
@@ -68,6 +68,9 @@ void TickDirectionServerImpl::Run() {
 	std::unique_ptr<Server> server(builder.BuildAndStart());
 	std::cout << "Server listening on " << server_address << std::endl;
 
+	grpc::HealthCheckServiceInterface* hlth_service = server->GetHealthCheckService();
+	hlth_service->SetServingStatus("Price.Direction.Health", true); 
+
 	// Wait for the server to shutdown. Note that some other thread must be
 	// responsible for shutting down the server for this call to ever return.
 	server->Wait();
@@ -75,31 +78,46 @@ void TickDirectionServerImpl::Run() {
 
 int main( int argc, char **argv) {
 
-	int32_t listen_port = 50091;
+    constexpr char dflt_ip_endpoint[] = "localhost:50091";
+
+	std::string server_ep;
 
 	struct option longopts[] = {
-		{ "listen_port",    required_argument,   nullptr, 'l' },
-		{ nullptr,  0,                  nullptr,  0 }
+		{ "listen_ep",    required_argument,   nullptr, 'l' },
+		{ nullptr,  0,    nullptr,  0 }
 	};
 
 	int32_t ch;
 	while ((ch = getopt_long(argc, argv, "l:", longopts, NULL)) != -1) {
 		switch(ch) {
 			case 'l':
-				listen_port = atoi(optarg);
-				break;
+				{
+					int32_t listen_port = atoi(optarg);
+					if (listen_port > 0) {
+						server_ep.append("localhost:").append(std::to_string(listen_port));
+					}
+					else {
+						// Assume provided EndPoint is a Unix socket
+						server_ep = optarg;
+					}
+				}
 			case '?':
 			default:
-				std::cerr << "Usage: " << argv[0] << " [-d [UP|DOWN]] [-l listen_port]" << "\n"
-					<< "l   - Port to listen to for client requests" << "\n"
+				std::cerr << "Usage: " << argv[0] << " [-l listen_port]" << "\n"
+					<< "l   - IP Port or Unix socket to listen to for client requests. Default: " << dflt_ip_endpoint << "\n"
 					<< std::endl;
 				exit(-1);
 		}
 	}
 
-	std::cout << "Listen Port: " << listen_port << std::endl;
+	if (server_ep.empty()) {
+		server_ep = dflt_ip_endpoint;
+		std::cout << "Defaulting to listen at Endpoint: " << server_ep << std::endl;
+	}
 
-	TickDirectionServerImpl server(listen_port);
+	std::cout << "Direction Server Listen Port: " << server_ep << std::endl;
+
+	TickDirectionServerImpl server(server_ep);
 	server.Run();
 
 	return 0;

@@ -6,6 +6,7 @@ project(tickProto VERSION 1.0)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/../install )
+set(CMAKE_CURRENT_BINARY_DIR ${PROJECT_SOURCE_DIR}/build)
 
 if (APPLE)
 	set(OPENSSL_ROOT_DIR "/usr/local/opt/openssl/")
@@ -93,32 +94,56 @@ message("GRPC_LIBS=${GRPC_LIBS}")
 message("GRPC_INCLUDE_DIRS=${GRPC_INCS}")
 message("GRPC_PLUGIN=${GRPC_PLUGIN}")
 
-# Proto file
-get_filename_component(pt_proto "./tick.proto" ABSOLUTE)
-get_filename_component(pt_proto_path "${pt_proto}" PATH)
 
-# Generated sources
-set(pt_proto_srcs "${CMAKE_CURRENT_BINARY_DIR}/tick.pb.cc")
-set(pt_proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/tick.pb.h")
-set(pt_grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/tick.grpc.pb.cc")
-set(pt_grpc_hdrs "${CMAKE_CURRENT_BINARY_DIR}/tick.grpc.pb.h")
+file(GLOB PROTOBUF_DEFINITION_FILES "*.proto")
+set(PROTOBUF_INPUT_DIRECTORY "${PROJECT_SOURCE_DIR}")
+set(PROTOBUF_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/")
 
-message("pt_proto=${pt_proto}")
-message("pt_proto_path=${pt_proto_path}")
-message ("PROTO_SRCS = ${pt_proto_srcs} ${pt_grpc_srcs}")
-message ("PROTO_HDRS = ${pt_proto_hdrs} ${pt_grpc_hdrs}")
+
 message ("PROTOBUF_INCLUDE_DIRS = ${PROTOBUF_INCS}")
+message ("PROTOBUF_OUTPUT_DIRECTORY = ${PROTOBUF_OUTPUT_DIRECTORY}")
 message ("CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")
 
-add_custom_command(
-				OUTPUT "${pt_proto_srcs}" "${pt_proto_hdrs}" "${pt_grpc_srcs}" "${pt_grpc_hdrs}"
+foreach(file ${PROTOBUF_DEFINITION_FILES})
+
+	# Proto file
+	get_filename_component(the_proto ${file} NAME)
+	get_filename_component(the_proto_path "${file}" PATH)
+
+	message("Processing Proto File ${the_proto} in ${the_proto_path}")
+	string(REGEX REPLACE "\.proto" "" the_proto_base ${the_proto})
+
+	# Generated sources
+	set(the_proto_srcs "${CMAKE_CURRENT_BINARY_DIR}/${the_proto_base}.pb.cc")
+	set(the_proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/${the_proto_base}.pb.h")
+	set(the_grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/${the_proto_base}.grpc.pb.cc")
+	set(the_grpc_hdrs "${CMAKE_CURRENT_BINARY_DIR}/${the_proto_base}.grpc.pb.h")
+
+	message ("PROTO_SRCS = ${the_proto_srcs} ${the_grpc_srcs}")
+	message ("PROTO_HDRS = ${the_proto_hdrs} ${the_grpc_hdrs}")
+
+	add_custom_command(
+				OUTPUT "${the_proto_srcs}" "${the_proto_hdrs}" "${the_grpc_srcs}" "${the_grpc_hdrs}"
 				COMMAND ${PROTOBUF_PROTOC}
 				ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
 				--cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
-				-I "${pt_proto_path}"
+				-I "${the_proto_path}"
 				--plugin=protoc-gen-grpc="${GRPC_PLUGIN}"
-				"${pt_proto}"
-				DEPENDS "${pt_proto}")
+				"${the_proto}"
+				DEPENDS "${the_proto}")
+
+	# Generated sources
+	list(APPEND pt_proto_srcs "${the_proto_srcs}")
+	list(APPEND pt_proto_hdrs "${the_proto_hdrs}")
+	list(APPEND pt_grpc_srcs "${the_grpc_srcs}")
+	list(APPEND pt_grpc_hdrs "${the_grpc_hdrs}")
+
+endforeach()
+
+
+message ("ALL PROTO_SRCS = ${pt_proto_srcs} ${pt_grpc_srcs}")
+message ("ALL PROTO_HDRS = ${pt_proto_hdrs} ${pt_grpc_hdrs}")
+
 
 # Include generated *.pb.h files
 include_directories(.)
