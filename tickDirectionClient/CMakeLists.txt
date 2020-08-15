@@ -123,10 +123,9 @@ endif()
 
 
 # -I directories
-include_directories(.)
-include_directories("${CMAKE_CURRENT_BINARY_DIR}")
-include_directories("${CMAKE_INSTALL_PREFIX}/include")
-include_directories("${GRPC_INCS}")
+#target_include_directories(tickDirectionClient .)
+#target_include_directories(tickDirectionClient "${CMAKE_CURRENT_BINARY_DIR}")
+include_directories(. "${CMAKE_INSTALL_PREFIX}/include" "${GRPC_INCS}")
 
 # Generate Version
 configure_file(tick_direction_client_version.h.in general/tick_direction_client_version.h)
@@ -138,6 +137,7 @@ add_executable(tickDirectionClient main.cpp)
 # if the install RPATH is not provided, the install tickDirectionClient will have none
 #set_target_properties(tickDirectionClient PROPERTIES INSTALL_RPATH “@loader_path/../lib”)
 set_target_properties(tickDirectionClient PROPERTIES INSTALL_RPATH “@executable_path/../lib”)
+set_target_properties(tickDirectionClient PROPERTIES PUBLIC_HEADER "tickDirectionClientImpl.h")
 
 target_link_libraries(tickDirectionClient
         ${TickProtoLib} ${GRPC_LIBS} ${PROTOBUF_LIBS})
@@ -148,4 +148,6 @@ target_link_libraries(tickDirectionClient
 
 install(TARGETS tickDirectionClient
         COMPONENT Exes
-        DESTINATION bin)
+        DESTINATION bin
+		PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_PREFIX}/include/tickDirectionClient/)
+	

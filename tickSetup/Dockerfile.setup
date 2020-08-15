@@ -1,4 +1,4 @@
-FROM grpc/cxx:1.15.0 AS build
+FROM grpc/cxx:1.31.0 AS build
 LABEL description="Container to build Base"
 
 ENV DEBIAN_FRONTEND noninteractive

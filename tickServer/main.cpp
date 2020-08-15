@@ -17,7 +17,7 @@ using grpc::Status;
 #include <tickproto/tick.pb.h>
 #include <tickproto/tick.grpc.pb.h>
 
-#include "../tickDirectionClient/tickDirectionClientImpl.h"
+#include <tickDirectionClient/tickDirectionClientImpl.h>
 
 class TickServerImpl final : public Price::Tob::Service {
 

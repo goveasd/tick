@@ -1,12 +1,14 @@
-FROM cpp-build-base:0.1.0 AS build
+FROM dgoveas/cpp-build-base:v1 AS build
 LABEL description="Container to build tickProto"
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LD_LIBRARY_PATH "/usr/local/lib;${LD_LIBRARY_PATH}"
 
-WORKDIR /build
+WORKDIR /work/tickProto
+RUN mkdir -p ./build
+RUN mkdir -p ../install
 
-COPY CMakeLists.txt tick.proto ./
+COPY CMakeLists.txt *.proto ./
 
 RUN cmake . && make
 RUN make install 
