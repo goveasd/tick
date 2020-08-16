@@ -13,11 +13,12 @@ ENV DEBIAN_FRONTEND noninteractive
 WORKDIR /work/tickClient
 RUN mkdir -p ./build
 RUN mkdir -p ../install/include/tickproto
+RUN mkdir -p ../lib
 
 COPY tickClient/CMakeLists.txt tickClient/main.cpp tickClient/TickClientImpl.h tickClient/tick_client_version.h.in ./
 COPY install/include/tickproto/* ../install/include/tickproto/
 
-ENV LD_LIBRARY_PATH "/usr/local/lib;/install/lib;${LD_LIBRARY_PATH}"
+ENV LD_LIBRARY_PATH "/usr/local/lib;/work/install/lib;${LD_LIBRARY_PATH}"
 RUN cmake . && make
 RUN make install
 
@@ -26,4 +27,4 @@ RUN rm -rf tickClient
 
 
 ENTRYPOINT ["/work/install/bin/tickclient"]
-CMD [ "-s", "localhost:50081"]
+CMD [ "-s", "0.0.0.0:50081"]

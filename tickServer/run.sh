@@ -1,1 +1,1 @@
-docker run -it -p 50081:50081 tick-server-exe:1.0.0
+docker run -it -p 50081:50081 --rm --name tick-server dgoveas/tick-server-exe:v1

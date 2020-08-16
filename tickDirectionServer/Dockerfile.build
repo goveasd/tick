@@ -18,7 +18,7 @@ RUN mkdir -p ../tickDirectionClient
 COPY tickDirectionServer/CMakeLists.txt tickDirectionServer/main.cpp tickDirectionServer/tick_direction_server_version.h.in ./
 COPY tickDirectionClient/tickDirectionClientImpl.h ../tickDirectionClient
 
-ENV LD_LIBRARY_PATH "/usr/local/lib;/install/lib;${LD_LIBRARY_PATH}"
+ENV LD_LIBRARY_PATH "/usr/local/lib;/work/install/lib;${LD_LIBRARY_PATH}"
 RUN cmake . && make
 RUN make install
 

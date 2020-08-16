@@ -101,6 +101,7 @@ int main( int argc, char **argv) {
 						server_ep = optarg;
 					}
 				}
+				break;
 			case '?':
 			default:
 				std::cerr << "Usage: " << argv[0] << " [-l listen_port]" << "\n"
