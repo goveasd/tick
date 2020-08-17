@@ -135,6 +135,7 @@ int main( int argc, char **argv) {
 					int32_t listen_port = atoi(optarg);
 					if (listen_port > 0) {
 						server_ep.append("0.0.0.0:").append(std::to_string(listen_port));
+						//server_ep.append("localhost:").append(std::to_string(listen_port));
 					}
 					else {
 						// Assume provided EndPoint is a Unix socket

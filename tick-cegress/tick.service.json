@@ -1,0 +1,26 @@
+{
+	"service": {
+		"name": "tick",
+		"port": 50081,
+
+		"connect": {
+                        "sidecar_service": {
+                             "proxy": {
+                                  "upstreams": [
+                                    {
+                                     "destination_name": "direction",
+                                     "local_bind_port": 10091
+                                    }
+                                  ]
+                             }
+                        }
+                 },
+
+		"check": {
+			"id":   "tick-service-health",
+			"name": "Tick Service Health",
+			"grpc": "127.0.0.1:50081/Price.Health",
+			"interval": "5s"
+		}
+    }
+}
