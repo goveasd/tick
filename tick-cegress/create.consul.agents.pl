@@ -75,8 +75,9 @@ if (index($location, "tick") == 0) {
 	$hasConfigFile = "direction.service.json";
 }
 
+$cmdToRun .= " -grpc-port 8502";
 if (defined $hasConfigFile) {
-   $cmdToRun .= " -grpc-port 8502 -config-file $hasConfigFile";
+   $cmdToRun .= " -config-file $hasConfigFile";
 }
 
 $cmdToRun .= " &";
@@ -94,16 +95,16 @@ system("$cmdToRun");// || die "Failed to run system call";
 
 print "Created agent on $hlocation!!\n";
 
-#my $startEnvoy = "GoForIt";
-my $startEnvoy = undef;
+my $startEnvoy = "GoForIt";
+#my $startEnvoy = undef;
 if (defined $startEnvoy and defined $hasConfigFile) {
 	print "\n\n          Sleeping a bit to let Consul get setup before starting sidecar proxy\n\n";
-	sleep(40);
+	sleep(30);
 
 
 	my $service = (index($location, "tick") == 0) ? "tick" : "duration";
 
-	my $proxyCmd = "consul connect envoy -sidecar-for $service -grpc-add=\"127.0.0.1:8502\" &";
+	my $proxyCmd = "consul connect envoy -sidecar-for $service -grpc-addr=127.0.0.1:8502 &";
 
 	print "Running Proxy Creation  $proxyCmd\n";
 	system("$proxyCmd") || die "Creation of Proxy failed";
