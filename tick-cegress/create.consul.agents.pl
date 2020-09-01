@@ -5,6 +5,8 @@ use warnings;
 use Data::Dumper qw(Dumper);
 
 use File::Temp qw/ :mktemp /;
+use File::Path qw(make_path);
+
 use Socket;
 use Sys::Hostname;
 
@@ -22,7 +24,8 @@ my (@map_keys) = keys %mappings;
 
 # hostname sometime shows up as macbook-pro.lan and other times as MacBook-Pro.local
 my $hlocation = hostname();
-my $location = index(uc($hlocation), "MACBOOK") == 0 ?  "local-node" : "$hlocation";
+
+my $location = (index(uc($hlocation), "MACBOOK") == 0 or index(uc($hlocation), "MACPRO") == 0) ?  "local-node" : "$hlocation";
 
 print "Location: $location\n";
 
@@ -32,6 +35,7 @@ die "Valid Location is needed: @map_keys\n" unless defined $location and exists(
 my $IP = $mappings{$location};
 print "IP:$IP\n";
 
+make_path('/tmp/consul/data', '/tmp/consul/log', '/tmp/envoy/log', {verbose => 1, mode => 0777});
 
 # Clean any previous tmp files
 unlink glob "/tmp/tmpfile*";
@@ -43,7 +47,7 @@ my $built_json =
     {
         \"advertise_addr\": \"$IP\",
         \"retry_join\": [\"172.20.20.41\"],
-        \"data_dir\": \"/tmp/consul\",
+        \"data_dir\": \"/tmp/consul/data\",
         \"client_addr\": \"0.0.0.0\"
     }
 ";
@@ -54,7 +58,8 @@ my $built_ln_json =
         \"ui\": true,
         \"advertise_addr\": \"$IP\",
         \"retry_join\": [\"172.20.20.41\"],
-        \"data_dir\": \"/tmp/consul\"
+        \"data_dir\": \"/tmp/consul/data\",
+        \"client_addr\": \"0.0.0.0\"
     }
 ";
 
@@ -71,11 +76,11 @@ my $hasConfigFile = undef();
 my $cmdToRun = "consul agent -config-file $tmpfilename ";
 if (index($location, "tick") == 0) {
 	$hasConfigFile = "tick.service.json";
-} elsif (index($location, "direction") == 0) {
+} elsif (index($location, "direction") == 0 || index($location, "local") == 0) {
 	$hasConfigFile = "direction.service.json";
 }
 
-$cmdToRun .= " -grpc-port 8502";
+$cmdToRun .= " -grpc-port 8502 -log-level trace -log-file /tmp/consul/log/";
 if (defined $hasConfigFile) {
    $cmdToRun .= " -config-file $hasConfigFile";
 }
@@ -90,23 +95,30 @@ if (defined $hasConfigFile) {
 	system("$checkCmdToRun") || die "Config $hasConfigFile is Invalid";
 }
 
-print "Executing ... $cmdToRun\n";
-system("$cmdToRun");// || die "Failed to run system call";
+my $startEnvoy = "xx";
+#my $startEnvoy = undef;
+if (defined $startEnvoy and not defined $hasConfigFile) {
+	$startEnvoy = undef();
+}
 
+print "Executing ... $cmdToRun\n";
+if (defined $startEnvoy) {
+	print "Will start ENVOY ..\n";
+}
+
+system("$cmdToRun"); // || die "Failed to run system call";
+##
 print "Created agent on $hlocation!!\n";
 
-my $startEnvoy = "GoForIt";
-#my $startEnvoy = undef;
-if (defined $startEnvoy and defined $hasConfigFile) {
+if (defined $startEnvoy) {
 	print "\n\n          Sleeping a bit to let Consul get setup before starting sidecar proxy\n\n";
 	sleep(30);
 
+	my $service = (index($location, "tick") == 0) ? "tick" : "direction";
 
-	my $service = (index($location, "tick") == 0) ? "tick" : "duration";
+	my $proxyCmd = "consul connect envoy -sidecar-for $service -grpc-addr=127.0.0.1:8502 -- --log-level debug --log-path /tmp/envoy/log/envoy.log &";
 
-	my $proxyCmd = "consul connect envoy -sidecar-for $service -grpc-addr=127.0.0.1:8502 &";
-
-	print "Running Proxy Creation  $proxyCmd\n";
+	print "\n\n\n\n\n\nRunning Proxy Creation  $proxyCmd\n\n\n\n\n\n\n";
 	system("$proxyCmd") || die "Creation of Proxy failed";
 	print "Created Proxy for Service: $service\n";
 } else {
