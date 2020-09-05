@@ -55,7 +55,6 @@ my $built_json =
 my $built_ln_json = 
 "
     {
-        \"ui\": true,
         \"advertise_addr\": \"$IP\",
         \"retry_join\": [\"172.20.20.41\"],
         \"data_dir\": \"/tmp/consul/data\",
@@ -116,7 +115,8 @@ if (defined $startEnvoy) {
 
 	my $service = (index($location, "tick") == 0) ? "tick" : "direction";
 
-	my $proxyCmd = "consul connect envoy -sidecar-for $service -grpc-addr=127.0.0.1:8502 -- --log-level debug --log-path /tmp/envoy/log/envoy.log &";
+	my $proxyCmd = "consul connect envoy -sidecar-for $service -grpc-addr=127.0.0.1:8502 -http-addr http://127.0.0.1:8500 -admin-bind 0.0.0.0:19000 -- --log-level debug --log-path /tmp/envoy/log/envoy.log &";
+	#my $proxyCmd = "consul connect envoy -sidecar-for $service -grpc-addr=$IP:8502 -http-addr http://$IP:8500 -admin-bind 0.0.0.0:19000 -- --log-level trace --log-path /tmp/envoy/log/envoy.log &";
 
 	print "\n\n\n\n\n\nRunning Proxy Creation  $proxyCmd\n\n\n\n\n\n\n";
 	system("$proxyCmd") || die "Creation of Proxy failed";

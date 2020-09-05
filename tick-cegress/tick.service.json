@@ -9,6 +9,7 @@
                                   "upstreams": [
                                     {
                                      "destination_name": "direction",
+                                     "local_bind_address": "172.20.20.21",
                                      "local_bind_port": 10091
                                     }
                                   ]

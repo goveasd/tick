@@ -10,6 +10,9 @@ LABEL build_tag=${BUILD_TAG}
 
 ENV DEBIAN_FRONTEND noninteractive
 
+ENV GRPC_TRACE all
+ENV GRPC_VERBOSITY DEBUG
+
 WORKDIR /work/tickDirectionClient
 RUN mkdir -p ./build
 RUN mkdir -p ../install/include/tickproto
