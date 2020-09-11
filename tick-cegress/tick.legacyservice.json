@@ -1,0 +1,26 @@
+{
+	"service": {
+		"name": "tick",
+		"port": 50081,
+
+		"connect": {
+                        "sidecar_service": {
+                             "proxy": {
+                                  "upstreams": [
+                                    {
+                                     "destination_name": "direction",
+                                     "local_bind_address": "172.20.20.1",
+                                     "local_bind_port": 10091,
+									 "config": {
+										"protocol": "grpc",
+										"envoy_listener_json" : "{ \"@type\": \"type.googleapis.com/envoy.api.v2.Listener\", \"name\": \"direction:172.20.20.1:10091\", \"address\": { \"socket_address\": { \"address\": \"172.20.20.1\", \"port_value\": 10091 } }, \"filter_chains\": [ { \"filters\": [ { \"name\": \"envoy.tcp_proxy\", \"config\": { \"stat_prefix\": \"upstream_direction_tcp\", \"cluster\": \"direction-outboundc\" } } ] } ] }",
+										"envoy_cluster_json": "{\"@type\": \"type.googleapis.com/envoy.api.v2.Cluster\", \"name\": \"direction-outboundc\", \"type\": \"EDS\", \"eds_cluster_config\": { \"eds_config\": {\"ads\": {}} }, \"connect_timeout\": \"50s\", \"circuit_breakers\": {}}"
+									 }
+                                    }
+                                  ]
+                             }
+                        }
+                 }
+    }
+}
+

@@ -6,6 +6,8 @@ project(tickDirectionClient VERSION 1.0)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/../install )
+#set(CMAKE_BUILD_TYPE RelWithDebInfo)
+set(CMAKE_BUILD_TYPE Debug)
 
 if (APPLE)
 	set(OPENSSL_ROOT_DIR "/usr/local/opt/openssl/")
